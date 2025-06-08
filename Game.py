@@ -5,7 +5,7 @@
 import streamlit as st
 import random
 
-st.title("🔍 Blank & Spy Game")
+st.title("🕵️ Spy Game")
 
 # Role display mapping with English and Chinese
 ROLE_DISPLAY = {

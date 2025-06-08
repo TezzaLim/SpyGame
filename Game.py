@@ -5,7 +5,14 @@
 import streamlit as st
 import random
 
-st.title("🕵️ Spy Game")
+st.title("🔍 Blank & Spy Game")
+
+# Role display mapping with English and Chinese
+ROLE_DISPLAY = {
+    'normal': 'Civilian (平民)',
+    'spy': 'Spy (间谍)',
+    'blank': 'Innocent Civilian (白板)'
+}
 
 # Sidebar controls: Restart and Setup
 st.sidebar.header("Controls")
@@ -18,14 +25,14 @@ if st.sidebar.button("Restart Game"):
 # Setup: define game parameters if not set
 if 'num_players' not in st.session_state:
     st.sidebar.subheader("Game Setup")
-    n = st.sidebar.number_input("Number of players", min_value=0, max_value=100, step=1, key='num_players_input')
-    b = st.sidebar.number_input("Number of blanks", min_value=0, max_value=100, step=1, key='num_blanks_input')
-    s = st.sidebar.number_input("Number of spies", min_value=0, max_value=100, step=1, key='num_spies_input')
+    n = st.sidebar.number_input("Number of players", min_value=3, max_value=100, step=1)
+    b = st.sidebar.number_input("Number of Innocent Civilians", min_value=1, max_value=n-1, step=1)
+    s = st.sidebar.number_input("Number of Spies", min_value=1, max_value=n-b, step=1)
     if st.sidebar.button("Initialize Game"):
         st.session_state['num_players'] = int(n)
         st.session_state['num_blanks'] = int(b)
         st.session_state['num_spies'] = int(s)
-        st.sidebar.success(f"Game: {n} players, {b} blanks, {s} spies.")
+        st.sidebar.success(f"Game: {n} players, {b} Innocent Civilians, {s} Spies.")
     else:
         st.write("*Configure game parameters in the sidebar and click Initialize Game.*")
         st.stop()
@@ -35,7 +42,7 @@ if 'roles_list' not in st.session_state:
     total = st.session_state['num_players']
     blanks = st.session_state['num_blanks']
     spies = st.session_state['num_spies']
-    # choose word pair for normals vs spies
+    # choose word pair
 # Composite word pairs in the format ("English 中文", "English 中文")
     word_pairs = [
         ("toothbrush 牙刷", "paintbrush 画刷"),
@@ -140,16 +147,11 @@ if 'roles_list' not in st.session_state:
         ("email 电子邮件", "letter 信")
     ]
 
-
-
-
     common, spy_word = random.choice(word_pairs)
-    # assign blank and spy indices
     indices = list(range(total))
     blank_idx = random.sample(indices, blanks)
     remaining = [i for i in indices if i not in blank_idx]
     spy_idx = random.sample(remaining, spies)
-    # build roles list
     roles = []
     for idx in indices:
         if idx in blank_idx:
@@ -163,7 +165,7 @@ if 'roles_list' not in st.session_state:
     st.session_state['current_turn'] = 0
     st.session_state['revealed'] = False
 
-# Gameplay controls: Reveal and Hide & Next
+# Gameplay controls
 col1, col2 = st.columns([1, 1])
 with col1:
     if st.button("Reveal"):
@@ -180,13 +182,14 @@ turn = st.session_state['current_turn']
 info = roles[turn]
 st.subheader(f"Player {turn+1} of {len(roles)}")
 
-# Show role & word when revealed for current player
+# Show role & word when revealed
 if st.session_state['revealed']:
-    #st.markdown(f"**Role:** {info['role'].capitalize()}")
+    display_role = ROLE_DISPLAY.get(info['role'], info['role'])
+    #st.markdown(f"**Role:** {display_role}")
     word = info['word'] or "(no word)"
     st.markdown(f"### **{word}**")
 
-st.caption("Use 'Hide & Next' to pass to the next player.")
+st.caption("Use 'Hide & Next' to pass control to the next player.")
 
 # Kill feature at bottom
 st.divider()
@@ -196,4 +199,5 @@ selected = st.selectbox("Select Player to Reveal", player_options)
 if st.button("Kill"):
     idx = player_options.index(selected)
     info_kill = st.session_state['roles_list'][idx]
-    st.markdown(f"**Player {idx+1} Role:** {info_kill['role'].capitalize()}")
+    display_role_kill = ROLE_DISPLAY.get(info_kill['role'], info_kill['role'])
+    st.markdown(f"**Player {idx+1} Role:** {display_role_kill}")
